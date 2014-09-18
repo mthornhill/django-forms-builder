@@ -133,6 +133,36 @@ class AbstractForm(models.Model):
     admin_links.short_description = ""
 
 
+@python_2_unicode_compatible
+class AbstractSection(models.Model):
+    """
+    A section for a user-built form.
+    """
+
+    title = models.CharField(_("Title"), max_length=settings.LABEL_MAX_LENGTH)
+    slug = models.SlugField(_("Slug"), editable=settings.EDITABLE_SLUGS,
+        max_length=100, unique=True)
+
+
+    class Meta:
+        verbose_name = _("Section")
+        verbose_name_plural = _("Sections")
+        abstract = True
+
+    def __str__(self):
+        return str(self.title)
+
+    def save(self, *args, **kwargs):
+        """
+        Create a unique slug from title - append an index and increment if it
+        already exists.
+        """
+        if not self.slug:
+            slug = slugify(self)
+            self.slug = unique_slug(self.__class__.objects, "slug", slug)
+        super(AbstractSection, self).save(*args, **kwargs)
+
+
 class FieldManager(models.Manager):
     """
     Only show visible fields when displaying actual form..
@@ -256,6 +286,8 @@ class FieldEntry(AbstractFieldEntry):
 class Form(AbstractForm):
     pass
 
+class Section(AbstractSection):
+    form = models.ForeignKey("Form", related_name="sections")
 
 class Field(AbstractField):
     """
@@ -263,6 +295,7 @@ class Field(AbstractField):
     """
 
     form = models.ForeignKey("Form", related_name="fields")
+    section = models.ForeignKey("Section", related_name="fields", null=True, blank=True)
     order = models.IntegerField(_("Order"), null=True, blank=True)
 
     class Meta(AbstractField.Meta):

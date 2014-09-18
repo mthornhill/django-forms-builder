@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from django.forms.models import BaseInlineFormSet
 from future.builtins import bytes, open
 
 from csv import writer
@@ -18,7 +19,7 @@ from django.template import RequestContext
 from django.utils.translation import ungettext, ugettext_lazy as _
 
 from forms_builder.forms.forms import EntriesForm
-from forms_builder.forms.models import Form, Field, FormEntry, FieldEntry
+from forms_builder.forms.models import Form, Field, Section, FormEntry, FieldEntry
 from forms_builder.forms.settings import CSV_DELIMITER, UPLOAD_ROOT
 from forms_builder.forms.settings import USE_SITES, EDITABLE_SLUGS
 from forms_builder.forms.utils import now, slugify
@@ -54,12 +55,28 @@ class FieldAdmin(admin.TabularInline):
     model = Field
     exclude = ('slug', )
 
+    def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
+
+        field = super(FieldAdmin, self).formfield_for_foreignkey(db_field, request, **kwargs)
+        if db_field.name == 'section':
+            if request._obj_ is not None:
+                field.queryset = field.queryset.filter(form__exact = request._obj_)
+            else:
+                field.queryset = field.queryset.none()
+
+        return field
+
+
+class SectionAdmin(admin.ModelAdmin):
+    model = Section
+    exclude = ('slug', )
+
 
 class FormAdmin(admin.ModelAdmin):
     formentry_model = FormEntry
     fieldentry_model = FieldEntry
 
-    inlines = (FieldAdmin,)
+    inlines = ()
     list_display = ("title", "status", "email_copies", "publish_date",
                     "expiry_date", "total_entries", "admin_links")
     list_display_links = ("title",)
@@ -70,6 +87,20 @@ class FormAdmin(admin.ModelAdmin):
                      "email_copies")
     radio_fields = {"status": admin.HORIZONTAL}
     fieldsets = form_admin_fieldsets
+    actions = ['copy_forms']
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        self.inlines = (FieldAdmin, )
+        return super(FormAdmin, self).change_view(request, object_id)
+
+    def add_view(self, request, form_url='', extra_context=None):
+        self.inlines = ()
+        return super(FormAdmin, self).add_view(request)
+
+    def get_form(self, request, obj=None, **kwargs):
+        # just save obj reference for future processing in Inline
+        request._obj_ = obj
+        return super(FormAdmin, self).get_form(request, obj, **kwargs)
 
     def queryset(self, request):
         """
@@ -99,6 +130,36 @@ class FormAdmin(admin.ModelAdmin):
                 name="form_file"),
         )
         return extra_urls + urls
+
+    def copy_forms(self, request, queryset):
+        for form in queryset.all():
+            fields = form.fields.all()
+            sections = form.sections.all()
+            # copy survey
+            form.title += " (Copy)"
+            form.pk = None
+            form.slug = None
+            form.save()
+            sections_dict = {}
+
+            for section in sections:
+                old_pk = section.pk
+                section.pk = None
+                section.slug = None
+                section.save()
+                sections_dict[old_pk] = section
+            # copy fields
+            for field in fields:
+                form.field = field
+                section = field.section
+                field.pk = None
+                field.slug = None
+                if field.section:
+                    field.section = sections_dict[section.pk]
+                field.save()
+
+
+    copy_forms.short_description = "Copy Forms"
 
     def entries_view(self, request, form_id, show=False, export=False,
                      export_xls=False):
@@ -201,3 +262,4 @@ class FormAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Form, FormAdmin)
+admin.site.register(Section, SectionAdmin)
