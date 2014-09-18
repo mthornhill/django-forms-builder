@@ -25,7 +25,7 @@
 
                     {% for field in fields %}
                       <li {% if field.errors %}class="field_error"{% endif %}>
-                        {{ field.label_tag }}
+                        <span>{{ field.label_tag }}{% if field.field.required %}*{% endif %}</span>
                         {{ field }}
                         {% for err in field.errors %}
                         <span class="error_message">{{ err }}</span>
