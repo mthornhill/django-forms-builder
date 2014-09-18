@@ -7,7 +7,6 @@
         {% if form_for_form.is_multipart %}enctype="multipart/form-data"{% endif %}>
         {% csrf_token %}
 
-
         {% if form_for_form.non_field_errors %}
         <div class="form_errors">
           {% for err in form_for_form.non_field_errors %}
@@ -18,7 +17,6 @@
         {% for hidden in form_for_form.hidden_fields %}
            {{ hidden }}
         {% endfor %}
-
 
         {% for section, fields in form_for_form.fieldsets.items %}
             <fieldset>
@@ -37,7 +35,6 @@
                 </ul>
             </fieldset>
         {% endfor %}
-
 
         <div style="clear:left;">&nbsp;</div>
         <input type="submit" value="{{ form.button_text }}">
