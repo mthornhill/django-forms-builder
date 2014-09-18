@@ -127,7 +127,10 @@ class FormForForm(forms.ModelForm):
         instance and its related field model instances.
         """
         self.form = form
+        self.fieldsets = {}
         self.form_fields = form.fields.visible()
+
+
         initial = kwargs.pop("initial", {})
         # If a FormEntry instance is given to edit, stores it's field
         # values for using as initial data.
@@ -137,10 +140,13 @@ class FormForForm(forms.ModelForm):
                 field_entries[field_entry.field_id] = field_entry.value
         super(FormForForm, self).__init__(*args, **kwargs)
         # Create the form fields.
+
         for field in self.form_fields:
+
             field_key = field.slug
             field_class = fields.CLASSES[field.field_type]
             field_widget = fields.WIDGETS.get(field.field_type)
+
             field_args = {"label": field.label, "required": field.required,
                           "help_text": field.help_text}
             arg_names = field_class.__init__.__code__.co_varnames
@@ -197,6 +203,13 @@ class FormForForm(forms.ModelForm):
             if field.placeholder_text and not field.default:
                 text = field.placeholder_text
                 self.fields[field_key].widget.attrs["placeholder"] = text
+
+            if field.field_type != fields.HIDDEN:
+
+                if field.section in self.fieldsets.keys():
+                    self.fieldsets[field.section].append(self.visible_fields()[-1])
+                else:
+                    self.fieldsets[field.section] = [self.visible_fields()[-1]]
 
     def save(self, **kwargs):
         """
