@@ -129,8 +129,7 @@ class FormForForm(forms.ModelForm):
         self.form = form
         self.fieldsets = {}
         self.form_fields = form.fields.visible()
-
-
+        
         initial = kwargs.pop("initial", {})
         # If a FormEntry instance is given to edit, stores it's field
         # values for using as initial data.
