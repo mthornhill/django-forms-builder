@@ -72,6 +72,11 @@ class SectionAdmin(admin.ModelAdmin):
     exclude = ('slug', )
 
 
+class SectionAdminTab(admin.TabularInline):
+    model = Section
+    exclude = ('slug', )
+
+
 class FormAdmin(admin.ModelAdmin):
     formentry_model = FormEntry
     fieldentry_model = FieldEntry
@@ -94,7 +99,7 @@ class FormAdmin(admin.ModelAdmin):
         return super(FormAdmin, self).change_view(request, object_id)
 
     def add_view(self, request, form_url='', extra_context=None):
-        self.inlines = ()
+        self.inlines = (SectionAdminTab, )
         return super(FormAdmin, self).add_view(request)
 
     def get_form(self, request, obj=None, **kwargs):
