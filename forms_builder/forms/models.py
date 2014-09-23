@@ -288,6 +288,7 @@ class Form(AbstractForm):
 
 class Section(AbstractSection):
     form = models.ForeignKey("Form", related_name="sections")
+    order = models.IntegerField(_("Order"), null=True, blank=True)
 
 class Field(AbstractField):
     """

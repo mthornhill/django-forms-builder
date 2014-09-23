@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from collections import OrderedDict
 from future.builtins import int, range, str
 
 from datetime import date, datetime
@@ -209,6 +210,11 @@ class FormForForm(forms.ModelForm):
                     self.fieldsets[field.section].append(self.visible_fields()[-1])
                 else:
                     self.fieldsets[field.section] = [self.visible_fields()[-1]]
+        sorted_fieldsets = sorted(
+            self.fieldsets.items(),
+            key=lambda item: 0 if item[0] is None or item[0].order is None else item[0].order
+        )
+        self.fieldsets = OrderedDict(sorted_fieldsets)
 
     def save(self, **kwargs):
         """
