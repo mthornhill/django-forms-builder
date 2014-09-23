@@ -56,6 +56,7 @@ class AbstractForm(models.Model):
 
     sites = models.ManyToManyField(Site, editable=settings.USE_SITES,
         default=[django_settings.SITE_ID], related_name="%(app_label)s_%(class)s_forms")
+    name = models.CharField(_("Name"), max_length=50)
     title = models.CharField(_("Title"), max_length=50)
     slug = models.SlugField(_("Slug"), editable=settings.EDITABLE_SLUGS,
         max_length=100, unique=True)
@@ -289,6 +290,9 @@ class Form(AbstractForm):
 class Section(AbstractSection):
     form = models.ForeignKey("Form", related_name="sections")
     order = models.IntegerField(_("Order"), null=True, blank=True)
+
+    def form_title(self):
+        return self.form.title
 
 class Field(AbstractField):
     """

@@ -35,7 +35,7 @@ except ImportError:
 fs = FileSystemStorage(location=UPLOAD_ROOT)
 form_admin_filter_horizontal = ()
 form_admin_fieldsets = [
-    (None, {"fields": ("title", ("status", "login_required",),
+    (None, {"fields": ("name", "title", ("status", "login_required",),
         ("publish_date", "expiry_date",),
         "intro", "button_text", "response", "redirect_url")}),
     (_("Email"), {"fields": ("send_email", "email_from", "email_copies",
@@ -71,6 +71,7 @@ class SectionAdmin(admin.ModelAdmin):
     model = Section
     exclude = ('slug', )
 
+    list_display = ('title', 'slug', 'form_title', 'order',)
 
 class SectionAdminTab(admin.TabularInline):
     model = Section
@@ -82,7 +83,7 @@ class FormAdmin(admin.ModelAdmin):
     fieldentry_model = FieldEntry
 
     inlines = ()
-    list_display = ("title", "status", "email_copies", "publish_date",
+    list_display = ("name", "title", "status", "email_copies", "publish_date",
                     "expiry_date", "total_entries", "admin_links")
     list_display_links = ("title",)
     list_editable = ("status", "email_copies", "publish_date", "expiry_date")
@@ -141,7 +142,7 @@ class FormAdmin(admin.ModelAdmin):
             fields = form.fields.all()
             sections = form.sections.all()
             # copy survey
-            form.title += " (Copy)"
+            form.name += " (Copy)"
             form.pk = None
             form.slug = None
             form.save()
